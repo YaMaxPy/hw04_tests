@@ -1,10 +1,11 @@
-from django.contrib.auth import get_user_model
+from http import HTTPStatus
+
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from ..models import Group, Post
+from ..models import Group, Post, User
 
-User = get_user_model()
+CREATE_PAGE = reverse('posts:post_create')
 
 
 class PostsFormsTests(TestCase):
@@ -23,21 +24,20 @@ class PostsFormsTests(TestCase):
             group=self.group,
             text='test-post',
         )
+        self.PROFILE_PAGE = reverse('posts:profile', kwargs={
+                                    'username': self.user.username})
+        self.EDIT_PAGE = reverse('posts:post_edit', kwargs={
+                                 'post_id': self.post.id})
 
     def test_create_post(self):
         posts_count = Post.objects.count()
         form_data = {'text': 'test-post',
                      'group': self.group.id,
                      'author': self.user}
-        response = self.authorized_client.post(
-            reverse('posts:post_create'),
-            data=form_data,
-            follow=True
-        )
-        self.assertRedirects(response, reverse(
-            'posts:profile',
-            kwargs={'username': self.user.username})
-        )
+        response = self.authorized_client.post(CREATE_PAGE,
+                                               data=form_data,
+                                               follow=True)
+        self.assertRedirects(response, self.PROFILE_PAGE)
         self.assertTrue(
             Post.objects.filter(
                 text='test-post',
@@ -56,10 +56,10 @@ class PostsFormsTests(TestCase):
                      'author': self.user,
                      'group': self.group}
         response = self.authorized_client.post(
-            reverse('posts:post_edit', kwargs={'post_id': original_text.id}),
+            self.EDIT_PAGE,
             data=form_data,
             follow=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTrue(Post.objects.filter(
                         group=self.group,
                         author=self.user,

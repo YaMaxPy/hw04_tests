@@ -1,11 +1,11 @@
-from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from ..models import Group, Post
+from ..models import Group, Post, User
+from ..utils import POSTS_ON_PAGE
 
-COUNT_TEST_POSTS: int = 13
-User = get_user_model()
+INDEX_PAGE = reverse('posts:index')
+COUNT_TEST_POSTS: int = POSTS_ON_PAGE + 1
 
 
 class PostsPaginatorTests(TestCase):
@@ -25,16 +25,19 @@ class PostsPaginatorTests(TestCase):
                                    group=self.group,
                                    author=self.user))
         self.post = Post.objects.bulk_create(list_posts)
+        self.GROUP_PAGE = reverse('posts:group_list', kwargs={
+                                  'slug': self.group.slug})
+        self.PROFILE_PAGE = reverse('posts:profile', kwargs={
+                                    'username': self.user.username})
 
     def test_paginator_pages_contains_correct_records(self):
-        pages: tuple = (reverse('posts:index'),
-                        reverse('posts:profile',
-                                kwargs={'username': f'{self.user.username}'}),
-                        reverse('posts:group_list',
-                                kwargs={'slug': f'{self.group.slug}'}))
+        pages: tuple = (INDEX_PAGE,
+                        self.PROFILE_PAGE,
+                        self.GROUP_PAGE)
         for page in pages:
-
             response_1 = self.guest_client.get(page)
             response_2 = self.guest_client.get(page + '?page=2')
-            self.assertEqual(len(response_1.context['page_obj']), 10)
-            self.assertEqual(len(response_2.context['page_obj']), 3)
+            self.assertEqual(len(response_1.context['page_obj']),
+                             POSTS_ON_PAGE)
+            self.assertEqual(len(response_2.context['page_obj']),
+                             COUNT_TEST_POSTS - POSTS_ON_PAGE)

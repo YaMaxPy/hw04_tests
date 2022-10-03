@@ -1,9 +1,13 @@
-from django.contrib.auth import get_user_model
+from http import HTTPStatus
+
 from django.test import Client, TestCase
+from django.urls import reverse
 
-from ..models import Group, Post
+from ..models import Group, Post, User
 
-User = get_user_model()
+CREATE_PAGE = reverse('posts:post_create')
+INDEX_PAGE = reverse('posts:index')
+UNEXISTING_PAGE = '/unexisting_page/'
 
 
 class PostsURLTests(TestCase):
@@ -21,30 +25,63 @@ class PostsURLTests(TestCase):
             author=self.user,
             text='test-post',
         )
+        self.GROUP_PAGE = reverse('posts:group_list', kwargs={
+                                  'slug': self.group.slug})
+        self.PROFILE_PAGE = reverse('posts:profile', kwargs={
+                                    'username': self.user.username})
+        self.DETAIL_PAGE = reverse('posts:post_detail', kwargs={
+                                   'post_id': self.post.id})
+        self.EDIT_PAGE = reverse('posts:post_edit', kwargs={
+                                 'post_id': self.post.id})
 
-    def test_urls_available_for_allusers(self):
+    def test_urls_available_for_guest_client(self):
         urls = {
-            '/': 200,
-            f'/group/{self.group.slug}/': 200,
-            f'/profile/{self.user.username}/': 200,
-            f'/posts/{self.post.id}/': 200,
-            f'/posts/{self.post.id}/edit/': 302,
-            '/create/': 302,
-            '/unexisting_page/': 404,
+            INDEX_PAGE: HTTPStatus.OK,
+            self.GROUP_PAGE: HTTPStatus.OK,
+            self.PROFILE_PAGE: HTTPStatus.OK,
+            self.DETAIL_PAGE: HTTPStatus.OK,
+            self.EDIT_PAGE: HTTPStatus.FOUND,
+            CREATE_PAGE: HTTPStatus.FOUND,
+            UNEXISTING_PAGE: HTTPStatus.NOT_FOUND,
         }
         for address, status in urls.items():
             with self.subTest(address=address):
                 response = self.guest_client.get(address)
                 self.assertEqual(response.status_code, status)
 
+    def test_urls_available_for_authorized_client(self):
+        urls = {
+            INDEX_PAGE: HTTPStatus.OK,
+            self.GROUP_PAGE: HTTPStatus.OK,
+            self.PROFILE_PAGE: HTTPStatus.OK,
+            self.DETAIL_PAGE: HTTPStatus.OK,
+            self.EDIT_PAGE: HTTPStatus.OK,
+            CREATE_PAGE: HTTPStatus.OK,
+            UNEXISTING_PAGE: HTTPStatus.NOT_FOUND,
+        }
+        for address, status in urls.items():
+            with self.subTest(address=address):
+                response = self.authorized_client.get(address)
+                self.assertEqual(response.status_code, status)
+
+    def test_urls_redirect_guest_client(self):
+        url1 = f'''{reverse('users:login')}?next={CREATE_PAGE}'''
+        url2 = self.DETAIL_PAGE
+        pages = {
+            CREATE_PAGE: url1,
+            self.EDIT_PAGE: url2}
+        for page, value in pages.items():
+            response = self.guest_client.get(page, follow=True)
+            self.assertRedirects(response, value)
+
     def test_templates(self):
         templates = {
-            '/': 'posts/index.html',
-            f'/group/{self.group.slug}/': 'posts/group_list.html',
-            f'/profile/{self.user.username}/': 'posts/profile.html',
-            f'/posts/{self.post.id}/': 'posts/post_detail.html',
-            f'/posts/{self.post.id}/edit/': 'posts/create_post.html',
-            '/create/': 'posts/create_post.html',
+            INDEX_PAGE: 'posts/index.html',
+            self.GROUP_PAGE: 'posts/group_list.html',
+            self.PROFILE_PAGE: 'posts/profile.html',
+            self.DETAIL_PAGE: 'posts/post_detail.html',
+            self.EDIT_PAGE: 'posts/create_post.html',
+            CREATE_PAGE: 'posts/create_post.html',
         }
         for address, template in templates.items():
             with self.subTest(address=address):
