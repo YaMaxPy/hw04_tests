@@ -1,3 +1,65 @@
-# hw04_tests
+### Описание
+Yatube - это социальная сеть с авторизацией, персональными лентами, комментариями и подписками на авторов статей.
 
-[![CI](https://github.com/yandex-praktikum/hw04_tests/actions/workflows/python-app.yml/badge.svg?branch=master)](https://github.com/yandex-praktikum/hw04_tests/actions/workflows/python-app.yml)
+### Функционал
+1. Написаны тесты для моделей приложения Django:
+- протестированы модели приложения posts в ``Yatube`;
+- добавлен метод str в классы Post и Group;
+- протестировано отображения значения поля str в объектах моделей.
+
+2. Написаны тесты для URLs приложения Django:
+- проверена доступность страниц и правильность названия шаблонов приложения Posts проекта Yatube согласно авторизации;
+- проверен запрос к несуществующей странице, вадающий ошибку 404.
+
+3. Написаны тесты для views: namespase:name и шаблонов приложения Django, а также тесты для views контекста приложения Django и проверки создания поста:
+- написаны тесты, проверяющие соответствие html-шаблонов во view - функциях.
+- проверена корректность словаря context, передаваемого в шаблон при вызове.
+- проверно, что если при создании поста и указания группы, пост появляется.
+- проверено, что пост не попадает в группу, для которой не был предназначен.
+
+### Запуск проекта:
+1. Склонируйте репозиторий:
+```
+git clone git@github.com:YaMaxPy/hw04_tests.git
+```
+2. Перейдите в директорию с проектом:
+```
+cd hw04_tests
+```
+3. Создайте и активируйте вирутальное окружение:
+```
+python -m venv venv
+```
+```
+Если у вас Linux/macOS: source venv/bin/activate
+Если у вас Windows: source venv/Scripts/activate
+```
+4. Установите зависимости из файла requirements.txt:
+```
+python3 -m pip install --upgrade pip
+```
+```
+pip install -r requirements.txt
+```
+6. Выполните миграции на уровне проекта:
+```
+cd yatube
+python3 manage.py makemigrations
+python3 manage.py migrate
+```
+7. Для локального запуска выполните команду:
+```
+python3 manage.py runserver
+
+Проект будет запущен и доступен по следующему адресу:
+- http://127.0.0.1:8000
+```
+8. Зарегистрируйте суперпользователя Django:
+```
+python3 manage.py createsuperuser
+
+# URL админ панели:
+- http://127.0.0.1:8000/admin
+```
+#### Автор
+- [Радченко Максим](https://github.com/YaMaxPy "GitHub аккаунт")

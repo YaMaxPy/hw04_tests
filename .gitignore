@@ -104,6 +104,9 @@ celerybeat.pid
 # Static files
 /yatube/static
 
+# Media files
+/yatube/media
+
 # Environments
 .env
 .venv

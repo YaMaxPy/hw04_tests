@@ -1,5 +1,6 @@
 from http import HTTPStatus
 
+from django.core.cache import cache
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -12,6 +13,7 @@ UNEXISTING_PAGE = '/unexisting_page/'
 
 class PostsURLTests(TestCase):
     def setUp(self):
+        cache.clear()
         self.guest_client = Client()
         self.user = User.objects.create_user(username='test-username')
         self.authorized_client = Client()
@@ -33,6 +35,8 @@ class PostsURLTests(TestCase):
                                    'post_id': self.post.id})
         self.EDIT_PAGE = reverse('posts:post_edit', kwargs={
                                  'post_id': self.post.id})
+        self.COMMENT_PAGE = reverse('posts:add_comment', kwargs={
+                                    'post_id': self.post.id})
 
     def test_urls_available_for_guest_client(self):
         urls = {
@@ -67,9 +71,11 @@ class PostsURLTests(TestCase):
     def test_urls_redirect_guest_client(self):
         url1 = f'''{reverse('users:login')}?next={CREATE_PAGE}'''
         url2 = self.DETAIL_PAGE
+        url3 = f'''{reverse('users:login')}?next={self.COMMENT_PAGE}'''
         pages = {
             CREATE_PAGE: url1,
-            self.EDIT_PAGE: url2}
+            self.EDIT_PAGE: url2,
+            self.COMMENT_PAGE: url3}
         for page, value in pages.items():
             response = self.guest_client.get(page, follow=True)
             self.assertRedirects(response, value)
